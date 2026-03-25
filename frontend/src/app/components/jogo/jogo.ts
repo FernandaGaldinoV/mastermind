@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RankingService } from '../../services/ranking.service';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-jogo',
@@ -17,7 +18,8 @@ export class JogoComponent implements OnInit {
   constructor(
     private rankingService: RankingService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private cd: ChangeDetectorRef
   ) {}
 
   coresDisponiveis: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
@@ -71,6 +73,8 @@ export class JogoComponent implements OnInit {
   }
 
   verificar() {
+
+    console.log(this.mensagem);
 
     if (this.jogoFinalizado) return;
 
@@ -126,6 +130,8 @@ export class JogoComponent implements OnInit {
           this.mensagem =
             `Posição correta: ${acertosPosicao} | ` +
             `Cor correta fora da posição: ${acertosOutraPosicao}`;
+
+          this.cd.detectChanges();
         }
         
           this.tentativa = ['', '', '', ''];
