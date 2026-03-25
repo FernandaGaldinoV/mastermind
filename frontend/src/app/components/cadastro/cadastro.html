@@ -1,0 +1,15 @@
+<h2>Cadastro</h2>
+
+<input [(ngModel)]="email" placeholder="Email" />
+<br><br>
+
+<input [(ngModel)]="senha" type="password" placeholder="Senha" />
+<br><br>
+
+<button (click)="cadastrar()">Cadastrar</button>
+
+<p *ngIf="mensagem">{{ mensagem }}</p>
+
+<br>
+
+<button (click)="voltar()">Voltar para login</button>

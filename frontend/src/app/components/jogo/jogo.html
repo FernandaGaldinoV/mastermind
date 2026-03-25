@@ -1,0 +1,68 @@
+<h2>Jogo Mastermind</h2>
+
+<p>Escolha 4 cores:</p>
+
+<div style="margin-bottom: 15px;">
+  <button
+    *ngFor="let cor of coresDisponiveis"
+    (click)="selecionarCor(cor)"
+    [style.background]="cor"
+    style="width:40px; height:40px; margin:5px; border:none; cursor:pointer; border-radius:50%;">
+  </button>
+</div>
+
+<p>Sua tentativa:</p>
+
+<div style="margin-bottom: 15px;">
+  <span
+    *ngFor="let cor of tentativa"
+    [style.background]="cor || 'white'"
+    style="display:inline-block; width:40px; height:40px; margin:5px; border:1px solid black; border-radius:50%;">
+  </span>
+</div>
+
+<button (click)="verificar()" [disabled]="jogoFinalizado">
+  Verificar
+</button>
+<button (click)="reiniciar()" style="margin-left: 10px;">Reiniciar</button>
+
+<p *ngIf="mensagem" style="margin-top: 15px; font-weight: bold;">
+  {{ mensagem }}
+</p>
+
+<h3 style="margin-top:20px;">Histórico de Tentativas</h3>
+
+<ul>
+  <li *ngFor="let item of historico" style="display:flex; align-items:center; margin-bottom:10px;">
+
+    <div>
+      <span *ngFor="let cor of item.tentativa"
+        [style.background]="cor"
+        style="display:inline-block; width:25px; height:25px; border-radius:50%; margin:2px;">
+      </span>
+    </div>
+
+    <div style="width:20px;"></div>
+
+    <div style="display:grid; grid-template-columns: repeat(2, 10px); gap:3px;">
+
+      <!-- pretas -->
+      <span *ngFor="let i of getArray(item.acertosPosicao)"
+        style="width:10px; height:10px; background:black; border-radius:50%;">
+      </span>
+
+      <!-- cinzas -->
+      <span *ngFor="let i of getArray(item.acertosOutraPosicao)"
+        style="width:10px; height:10px; background:gray; border-radius:50%;">
+      </span>
+
+    </div>
+
+  </li>
+</ul>
+
+<br><br>
+
+<button (click)="voltar()">Voltar</button>
+
+<button (click)="logout()">Logout</button>

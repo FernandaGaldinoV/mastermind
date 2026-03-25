@@ -1,0 +1,16 @@
+<h2>Login</h2>
+
+<input [(ngModel)]="email" placeholder="Email">
+<br><br>
+
+<input [(ngModel)]="senha" type="password" placeholder="Senha">
+<br><br>
+
+<button (click)="login()">Entrar</button>
+
+<p *ngIf="erro" style="color:red">{{ erro }}</p>
+
+<br><br>
+
+<p>Não tem conta?</p>
+<button (click)="irParaCadastro()">Cadastrar</button>
