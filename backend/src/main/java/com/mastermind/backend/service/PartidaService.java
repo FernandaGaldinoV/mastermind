@@ -30,15 +30,19 @@ public class PartidaService {
             throw new IllegalArgumentException("Número máximo de tentativas excedido");
         }
 
+        if (!dto.isVenceu()) {
+            return null;
+        }
+
         Partida partida = new Partida();
         partida.setUsuario(dto.getUsuario());
         partida.setTentativas(dto.getTentativas());
-        partida.setVenceu(dto.isVenceu());
+        partida.setVenceu(true);
 
         return partidaRepository.save(partida);
     }
 
     public List<Partida> listar() {
-        return partidaRepository.findAllByOrderByTentativasAsc();
+        return partidaRepository.findByVenceuTrueOrderByTentativasAsc();
     }
 }

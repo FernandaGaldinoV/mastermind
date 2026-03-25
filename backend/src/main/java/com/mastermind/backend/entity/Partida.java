@@ -15,8 +15,8 @@ public class Partida {
 
     private String usuario;
     private int tentativas;
-
     private boolean venceu;
+    private String codigoSecreto;
 
     public Long getId() {
         return id;
@@ -48,5 +48,13 @@ public class Partida {
 
     public void setVenceu(boolean venceu) {
         this.venceu = venceu;
+    }
+
+    public String getCodigoSecreto() {
+        return codigoSecreto;
+    }
+
+    public void setCodigoSecreto(String codigoSecreto) {
+        this.codigoSecreto = codigoSecreto;
     }
 }

@@ -14,12 +14,18 @@ public class JogoController {
     private final JogoService jogoService;
 
     public JogoController(JogoService jogoService) {
-
         this.jogoService = jogoService;
     }
 
+    @PostMapping("/iniciar")
+    public Map<String, Object> iniciar(@RequestParam String usuario) {
+        return jogoService.iniciarPartida(usuario);
+    }
+
     @PostMapping("/jogar")
-    public Map<String, Object> jogar(@RequestBody JogadaDTO jogada) {
-        return jogoService.verificarJogada(jogada.getTentativa());
+    public Map<String, Object> jogar(@RequestParam Long partidaId,
+                                     @RequestBody JogadaDTO jogada) {
+
+        return jogoService.verificarJogada(partidaId, jogada.getTentativa());
     }
 }

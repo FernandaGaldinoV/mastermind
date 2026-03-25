@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RankingService } from '../../services/ranking.service';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-jogo',
@@ -11,22 +12,21 @@ import { Router } from '@angular/router';
   templateUrl: './jogo.html',
   styleUrl: './jogo.css'
 })
-export class JogoComponent {
-  
+export class JogoComponent implements OnInit {
+
   constructor(
     private rankingService: RankingService,
-    private router: Router
-  ) {
-    this.gerarCodigo();
-  }
-  
+    private router: Router,
+    private http: HttpClient
+  ) {}
+
   coresDisponiveis: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
 
-
-  codigo: string[] = [];
   tentativa: string[] = ['', '', '', ''];
   mensagem: string = '';
   jogoFinalizado = false;
+
+  partidaId: number = 0;
 
   historico: Array<{
     tentativa: string[];
@@ -34,15 +34,26 @@ export class JogoComponent {
     acertosOutraPosicao: number;
   }> = [];
 
-  gerarCodigo() {
-    this.codigo = [];
+  ngOnInit() {
+    this.iniciarPartida();
+  }
 
-    for (let i = 0; i < 4; i++) {
-      const cor = this.coresDisponiveis[
-        Math.floor(Math.random() * this.coresDisponiveis.length)
-      ];
-      this.codigo.push(cor);
-    }
+  iniciarPartida() {
+    const usuario = localStorage.getItem('usuario') || 'Jogador';
+
+    this.http.post<any>(
+      `http://localhost:8080/jogo/iniciar?usuario=${usuario}`,
+      {}
+    ).subscribe({
+      next: (data) => {
+        this.partidaId = data.partidaId;
+        console.log('Partida iniciada:', this.partidaId);
+      },
+      error: (err) => {
+        console.error('Erro ao iniciar partida', err);
+        this.mensagem = 'Erro ao iniciar jogo.';
+      }
+    });
   }
 
   selecionarCor(cor: string) {
@@ -50,8 +61,10 @@ export class JogoComponent {
     if (this.jogoFinalizado) return;
 
     for (let i = 0; i < this.tentativa.length; i++) {
-      if (!this.tentativa[i]) {
-        this.tentativa[i] = cor;
+      if (this.tentativa[i] === '') {
+        const novaTentativa = [...this.tentativa];
+        novaTentativa[i] = cor;
+        this.tentativa = novaTentativa;
         return;
       }
     }
@@ -60,6 +73,11 @@ export class JogoComponent {
   verificar() {
 
     if (this.jogoFinalizado) return;
+
+    if (!this.partidaId) {
+      this.mensagem = 'Aguarde o jogo iniciar...';
+      return;
+    }
 
     if (this.historico.length >= 10) {
       this.mensagem = 'Você perdeu!';
@@ -72,72 +90,51 @@ export class JogoComponent {
       return;
     }
 
-    const atual = [...this.tentativa];
+    this.http.post<any>(
+      `http://localhost:8080/jogo/jogar?partidaId=${this.partidaId}`,
+      { tentativa: this.tentativa }
+    ).subscribe({
+      next: (data) => {
 
-    let acertosPosicao = 0;
-    let acertosOutraPosicao = 0;
+        const acertosPosicao = data.acertosPosicao;
+        const acertosOutraPosicao = data.acertosOutraPosicao;
 
-    const usadoCodigo = Array(4).fill(false);
-    const usadoTentativa = Array(4).fill(false);
+        this.historico = [
+          ...this.historico,
+          {
+            tentativa: [...this.tentativa],
+            acertosPosicao,
+            acertosOutraPosicao
+          }
+        ];
 
-    // Cor e posição corretas
-    for (let i = 0; i < 4; i++) {
-      if (atual[i] === this.codigo[i]) {
-        acertosPosicao++;
-        usadoCodigo[i] = true;
-        usadoTentativa[i] = true;
-      }
-    }
+        if (acertosPosicao === 4 && !this.jogoFinalizado) {
 
-    //Cor correta e posição errada
-    for (let i = 0; i < 4; i++) {
-      if (usadoTentativa[i]) continue;
+          this.jogoFinalizado = true;
+          this.mensagem = 'Parabéns! Você acertou!';
 
-      for (let j = 0; j < 4; j++) {
-        if (usadoCodigo[j]) continue;
+          this.rankingService.salvar({
+            usuario: localStorage.getItem('usuario') || 'Jogador',
+            tentativas: this.historico.length,
+            venceu: true
+          }).subscribe({
+            next: () => console.log('Partida salva!'),
+            error: (err) => console.error('Erro ao salvar', err)
+          });
 
-        if (atual[i] === this.codigo[j]) {
-          acertosOutraPosicao++;
-          usadoCodigo[j] = true;
-          usadoTentativa[i] = true;
-          break;
+        } else {
+          this.mensagem =
+            `Posição correta: ${acertosPosicao} | ` +
+            `Cor correta fora da posição: ${acertosOutraPosicao}`;
         }
+        
+          this.tentativa = ['', '', '', ''];
+      },
+      error: (err) => {
+        console.error('Erro ao jogar', err);
+        this.mensagem = 'Erro ao processar jogada.';
       }
-    }
-
-    
-    this.historico = [
-      ...this.historico,
-      {
-        tentativa: [...this.tentativa],
-        acertosPosicao,
-        acertosOutraPosicao
-      }
-    ];
-
-    
-    if (acertosPosicao === 4 && !this.jogoFinalizado) {
-      
-      this.jogoFinalizado = true;
-      
-      this.mensagem = 'Parabéns! Você acertou o código!';
-      
-      this.rankingService.salvar({
-        usuario: localStorage.getItem('usuario') || 'Jogador',
-        tentativas: this.historico.length,
-        venceu: true
-      }).subscribe({
-        next: () => console.log('Partida salva!'),
-        error: (err) => console.error('Erro ao salvar', err)
-      });
-
-    } else {
-      this.mensagem =
-        `Posição correta: ${acertosPosicao} | ` +
-        `Cor correta fora da posição: ${acertosOutraPosicao}`;
-    }
-
-    this.tentativa = ['', '', '', ''];
+    });
   }
 
   reiniciar() {
@@ -145,7 +142,8 @@ export class JogoComponent {
     this.mensagem = '';
     this.historico = [];
     this.jogoFinalizado = false;
-    this.gerarCodigo();
+
+    this.iniciarPartida();
   }
 
   getArray(qtd: number): any[] {
@@ -160,5 +158,4 @@ export class JogoComponent {
     localStorage.removeItem('usuario');
     this.router.navigate(['/']);
   }
-
 }
